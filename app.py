@@ -1,10 +1,8 @@
-import json
 import random
 import os
 from PIL import Image, ImageDraw, ImageFont
 from colorsys import hls_to_rgb
 import requests
-import io
 from datetime import datetime
 
 texts = ["Primer texto para la imagen",
@@ -65,7 +63,11 @@ def generate_image(text, font_name, font_weight, margin_percent=0.1):
 
     # Calcular ancho y alto del texto con margen interno
     margin = int(min(width, height) * margin_percent)
-    text_width, text_height = font.getsize(text)
+    # Obtener una máscara del texto renderizado en la fuente
+    mask = font.getmask(text)
+
+    # Obtener las dimensiones de la máscara
+    text_width, text_height = mask.size
     max_width = width - 2 * margin
     max_height = height - 2 * margin
 
@@ -89,10 +91,10 @@ def generate_image(text, font_name, font_weight, margin_percent=0.1):
 
     return image
 
+directory = str(datetime.now())
+
 for i, text in enumerate(texts):
     image = generate_image(text, "Roboto", font_weight=700)
-    directory = str(datetime.now())
     os.makedirs(directory, exist_ok=True)
-
     # Guardar la imagen en el directorio
     image.save(f"{directory}/image_{i}.png", optimize=True, quality=95)
