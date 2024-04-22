@@ -5,10 +5,28 @@ from colorsys import hls_to_rgb
 import requests
 from datetime import datetime
 
-texts = ["Primer texto para la imagen",
-        "Segundo texto para la imagen",
-        "Tercer texto para la imagen",
-        "Cuarto texto para la imagen"]
+texts = [
+    "Elige no estar molesto, y no te molestarás.",
+    "La felicidad yace en la virtud, y no en los placeres materiales.",
+    "No busques que las cosas sucedan como deseas, sino desea que las cosas sucedan como suceden, y serás feliz.",
+    "No son las cosas en sí mismas las que nos perturban, sino nuestras interpretaciones de ellas.",
+    "Lo que nos hace sufrir no es lo que nos pasa, sino lo que pensamos acerca de lo que nos pasa.",
+    "No dejes que tu felicidad dependa de algo que puedas perder.",
+    "Acepta todo lo que te sucede con ecuanimidad y serenidad.",
+    "Vive cada día como si fuera el último, pero planifica cada día como si fueras a vivir para siempre.",
+    "No lamentes el pasado ni temas el futuro, concentra tu mente en el presente.",
+    "El sabio se contenta con lo que le toca sin desear lo que no le toca.",
+    "El sufrimiento es el entrenamiento del carácter; el destino es el maestro del alma.",
+    "La virtud es la única buena; el vicio es la única maldad.",
+    "La adversidad es un espejo en el que la virtud se refleja con mayor claridad.",
+    "No busques ser rico, busca ser feliz. La riqueza está en el alma, no en la cuenta bancaria.",
+    "La muerte no es temida por aquellos que han aprendido a vivir sabiamente.",
+    "No busques cambiar el mundo, cámbiate a ti mismo.",
+    "No esperes que los demás actúen según tus deseos, actúa tú mismo según tus principios.",
+    "Aprende a soportar con dignidad lo que no puedes evitar cambiar.",
+    "La libertad suprema es ser dueño de uno mismo.",
+    "Elige siempre la virtud sobre el placer, la paz interior sobre la agitación externa.",
+]
 
 
 
@@ -32,7 +50,7 @@ def download_font(font_name, font_weight):
 
     # Cargar fuente desde el archivo temporal
     try:
-        font = ImageFont.truetype(temp_font_file, 96)
+        font = ImageFont.truetype(temp_font_file, 700)
     except OSError:
         # Utilizar una fuente predeterminada de Pillow como respaldo
         font = ImageFont.load_default()
@@ -42,9 +60,9 @@ def download_font(font_name, font_weight):
 
     return font
 
-def generate_image(text, font_name, font_weight, margin_percent=0.1):
-    width = 1080
-    height = 1080
+def generate_image(text, font_name, font_weight, margin_percent=0.005):
+    width = 500
+    height = 500
 
     # Colores pastel aleatorios
     hue = random.uniform(0, 1)
@@ -63,23 +81,36 @@ def generate_image(text, font_name, font_weight, margin_percent=0.1):
 
     # Calcular ancho y alto del texto con margen interno
     margin = int(min(width, height) * margin_percent)
-    # Obtener una máscara del texto renderizado en la fuente
-    mask = font.getmask(text)
-
-    # Obtener las dimensiones de la máscara
-    text_width, text_height = mask.size
     max_width = width - 2 * margin
     max_height = height - 2 * margin
 
-    # Ajustar tamaño de fuente si es necesario
-    while text_width > max_width or text_height > max_height:
-        font = ImageFont.truetype(font.font_file, font.size - 1)
-        text_width, text_height = font.getsize(text)
+    # Dividir el texto en líneas según su longitud
+    lines = []
+    line = ""
+    for word in text.split():
+        test_line = line + word + " "
+        test_mask = font.getmask(test_line)
+        test_width, test_height = test_mask.size
+        if test_width <= max_width:
+            line = test_line
+        else:
+            lines.append(line)
+            line = word + " "
+    lines.append(line)
+
+    # Calcular altura total del texto
+    total_text_height = sum(font.getmask(line).size[1] for line in lines)
+
+    # Calcular posición inicial de las líneas para centrar verticalmente el texto
+    y_offset = (height - total_text_height) // 2
 
     # Dibujar texto centrado
-    text_x = (width - text_width) // 2
-    text_y = (height - text_height) // 2
-    draw.text((text_x, text_y), text, font=font, fill=(0, 0, 0, 255))
+    for line in lines:
+        mask = font.getmask(line)
+        text_width, text_height = mask.size
+        x = (width - text_width) // 2
+        draw.text((x, y_offset), line, font=font, fill=(0, 0, 0, 255))
+        y_offset += text_height + 10  # Ajusta el valor "10" según sea necesario
 
     # Aplicar degradado
     gradient = Image.new("L", (width, height), color=0)
@@ -90,6 +121,7 @@ def generate_image(text, font_name, font_weight, margin_percent=0.1):
     image.putalpha(gradient)
 
     return image
+
 
 directory = str(datetime.now())
 
